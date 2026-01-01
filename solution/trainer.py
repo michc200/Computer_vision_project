@@ -60,6 +60,7 @@ class Trainer:
         print_every = int(len(train_dataloader) / 10)
 
         for batch_idx, (inputs, targets) in enumerate(train_dataloader):
+            inputs, targets = inputs.to(device), targets.to(device)
             self.optimizer.zero_grad()
             scores = self.model(inputs)
             loss = self.criterion(scores, targets)
@@ -102,6 +103,7 @@ class Trainer:
         print_every = max(int(len(dataloader) / 10), 1)
 
         for batch_idx, (inputs, targets) in enumerate(dataloader):
+            inputs, targets = inputs.to(device), targets.to(device)
             with torch.no_grad():
                 scores = self.model(inputs)
                 loss = self.criterion(scores, targets)
