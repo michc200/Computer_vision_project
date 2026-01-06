@@ -33,7 +33,6 @@ class SimpleNet(nn.Module):
         two_way_output = self.fc3(fully_connected_second_out)
         return two_way_output
 
-
 def get_xception_based_model() -> nn.Module:
     """Return an Xception-Based network.
 
@@ -41,5 +40,13 @@ def get_xception_based_model() -> nn.Module:
     (2) Override `custom_network`'s fc attribute with the binary
     classification head stated in the exercise.
     """
-    """INSERT YOUR CODE HERE, overrun return."""
-    return SimpleNet()
+    custom_network = build_xception_backbone(pretrained=True)
+    custom_network.fc = nn.Sequential(
+        nn.Linear(2048, 1000),
+        nn.ReLU(),                 
+        nn.Linear(1000, 256),
+        nn.ReLU(),
+        nn.Linear(256, 64),
+        nn.ReLU(),
+        nn.Linear(64, 2))
+    return custom_network
