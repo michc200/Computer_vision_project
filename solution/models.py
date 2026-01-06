@@ -50,3 +50,7 @@ def get_xception_based_model() -> nn.Module:
         nn.ReLU(),
         nn.Linear(64, 2))
     return custom_network
+
+
+if __name__ == '__main__':
+    network = get_xception_based_model()
