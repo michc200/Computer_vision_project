@@ -164,15 +164,7 @@ def main():
     # load model
     model_name = args.model
     model = load_model(model_name)
-
-    # TODO: remove
-    # ===================================================================
-    checkpoint = torch.load(args.checkpoint_path, map_location=device)
-    model.load_state_dict(checkpoint['model'])
-    # ===================================================================
-
-
-    # model.load_state_dict(torch.load(args.checkpoint_path)['model'])
+    model.load_state_dict(torch.load(args.checkpoint_path)['model'])
     model.eval()
 
     # load dataset
