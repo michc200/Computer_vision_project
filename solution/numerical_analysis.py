@@ -64,7 +64,7 @@ def get_soft_scores_and_true_labels(dataset, model):
                             batch_size=batch_size,
                             shuffle=False)
     
-    # We will collect the raw tensors here
+    # Use lists to store raw tensors first
     batch_first_scores = []
     batch_second_scores = []
     batch_labels = []
@@ -72,16 +72,11 @@ def get_soft_scores_and_true_labels(dataset, model):
     with torch.no_grad():
         for inputs, targets in dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
-            scores = model(inputs)
-            
-            # Store the raw batch tensors (detached from graph)
-            batch_first_scores.append(scores[0].detach().cpu())
-            batch_second_scores.append(scores[1].detach().cpu())
+            scores = model(inputs) # Shape is [batch_size, 2]            
+            batch_first_scores.append(scores[:, 0].detach().cpu())
+            batch_second_scores.append(scores[:, 1].detach().cpu())
             batch_labels.append(targets.cpu())
 
-    # --- ROBUST FIX ---
-    # Concatenate all batches into one long tensor, then flatten, then convert to list.
-    # This guarantees that the list length equals the total number of samples (1103).
     all_first_soft_scores = torch.cat(batch_first_scores).flatten().tolist()
     all_second_soft_scores = torch.cat(batch_second_scores).flatten().tolist()
     gt_labels = torch.cat(batch_labels).flatten().tolist()
@@ -169,7 +164,15 @@ def main():
     # load model
     model_name = args.model
     model = load_model(model_name)
-    model.load_state_dict(torch.load(args.checkpoint_path)['model'])
+
+    # TODO: remove
+    # ===================================================================
+    checkpoint = torch.load(args.checkpoint_path, map_location=device)
+    model.load_state_dict(checkpoint['model'])
+    # ===================================================================
+
+
+    # model.load_state_dict(torch.load(args.checkpoint_path)['model'])
     model.eval()
 
     # load dataset
