@@ -73,7 +73,7 @@ def get_soft_scores_and_true_labels(dataset, model):
         for inputs, targets in dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
             scores = model(inputs) # Shape is [batch_size, 2]            
-            batch_first_scores.append(scores[:, 0].detach().cpu())
+            batch_first_scores.append(-scores[:, 0].detach().cpu())
             batch_second_scores.append(scores[:, 1].detach().cpu())
             batch_labels.append(targets.cpu())
 
