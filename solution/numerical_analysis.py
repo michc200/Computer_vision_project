@@ -63,18 +63,30 @@ def get_soft_scores_and_true_labels(dataset, model):
     dataloader = DataLoader(dataset,
                             batch_size=batch_size,
                             shuffle=False)
-    all_first_soft_scores = []
-    all_second_soft_scores = []
-    gt_labels = []
+    
+    # We will collect the raw tensors here
+    batch_first_scores = []
+    batch_second_scores = []
+    batch_labels = []
+
     with torch.no_grad():
         for inputs, targets in dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
             scores = model(inputs)
-            all_first_soft_scores.append(scores[0].cpu())
-            all_second_soft_scores.append(scores[1].cpu())
-            gt_labels.append(targets.tolist())
-    return all_first_soft_scores, all_second_soft_scores, gt_labels
+            
+            # Store the raw batch tensors (detached from graph)
+            batch_first_scores.append(scores[0].detach().cpu())
+            batch_second_scores.append(scores[1].detach().cpu())
+            batch_labels.append(targets.cpu())
 
+    # --- ROBUST FIX ---
+    # Concatenate all batches into one long tensor, then flatten, then convert to list.
+    # This guarantees that the list length equals the total number of samples (1103).
+    all_first_soft_scores = torch.cat(batch_first_scores).flatten().tolist()
+    all_second_soft_scores = torch.cat(batch_second_scores).flatten().tolist()
+    gt_labels = torch.cat(batch_labels).flatten().tolist()
+
+    return all_first_soft_scores, all_second_soft_scores, gt_labels
 
 def plot_roc_curve(roc_curve_figure,
                    all_first_soft_scores,
