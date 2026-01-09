@@ -10,7 +10,9 @@ from torch.utils.data import DataLoader
 
 from common import FIGURES_DIR
 from utils import load_dataset, load_model
-
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
+from pytorch_grad_cam.utils.image import show_cam_on_image
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -52,8 +54,33 @@ def get_grad_cam_visualization(test_dataset: torch.utils.data.Dataset,
         of batch size 1, it's a tensor of shape (1,)).
     """
     """INSERT YOUR CODE HERE, overrun return."""
-    return np.random.rand(256, 256, 3), torch.randint(0, 2, (1,))
+    loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=True)
+    input_tensor, true_label = next(iter(loader))
 
+    # Ensure input tensor matches model device
+    device = next(model.parameters()).device
+    input_tensor = input_tensor.to(device)
+
+    # Compute a Grad-CAM for that image for the target layer: model.conv3
+    target_layers = [model.conv3]
+    
+    # We target the true label for the visualization
+    targets = [ClassifierOutputTarget(true_label.item())]
+
+    with GradCAM(model=model, target_layers=target_layers) as cam:
+        grayscale_cam = cam(input_tensor=input_tensor, targets=targets)
+        grayscale_cam = grayscale_cam[0, :]
+
+        # Prepare image for visualization (H, W, C)
+        rgb_img = input_tensor[0].permute(1, 2, 0).cpu().numpy()
+        
+        # Normalize to [0, 1] for show_cam_on_image if necessary (handling normalized tensors)
+        rgb_img = (rgb_img - rgb_img.min()) / (rgb_img.max() - rgb_img.min())
+        
+        # Return the visualization and the true label
+        visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+        
+        return visualization, true_label
 
 def main():
     """Create two GradCAM images, one of a real image and one for a fake
