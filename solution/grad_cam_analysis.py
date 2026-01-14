@@ -37,6 +37,7 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def get_grad_cam_visualization(test_dataset: torch.utils.data.Dataset,
                                model: torch.nn.Module) -> tuple[np.ndarray,
                                                                 torch.tensor]:
@@ -52,10 +53,12 @@ def get_grad_cam_visualization(test_dataset: torch.utils.data.Dataset,
         the true label of that sample (since it is an output of a DataLoader
         of batch size 1, it's a tensor of shape (1,)).
     """
+    """INSERT YOUR CODE HERE, overrun return."""
     loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=True)
     input_tensor, true_label = next(iter(loader))
 
     # Ensure input tensor matches model device
+    device = next(model.parameters()).device
     input_tensor = input_tensor.to(device)
 
     # Compute a Grad-CAM for that image for the target layer: model.conv3
@@ -68,14 +71,11 @@ def get_grad_cam_visualization(test_dataset: torch.utils.data.Dataset,
         grayscale_cam = cam(input_tensor=input_tensor, targets=targets)
         grayscale_cam = grayscale_cam[0, :]
 
-        # Denormalize the image using the constants from utils.py
-        # Formula: original = (normalized * std) + mean
-        mean = torch.tensor([0.4914, 0.4822, 0.4465]).view(3, 1, 1).to(device)
-        std = torch.tensor([0.2023, 0.1994, 0.2010]).view(3, 1, 1).to(device)
+        # Prepare image for visualization (H, W, C)
+        rgb_img = input_tensor[0].permute(1, 2, 0).cpu().numpy()
         
-        # Prepare image for visualization (H, W, C) - denormalize first
-        rgb_img = (input_tensor[0] * std + mean).permute(1, 2, 0).cpu().numpy()
-        rgb_img = np.clip(rgb_img, 0, 1)  # Ensure pixel values are in [0, 1] range
+        # Normalize to [0, 1] for show_cam_on_image if necessary (handling normalized tensors)
+        rgb_img = (rgb_img - rgb_img.min()) / (rgb_img.max() - rgb_img.min())
         
         # Return the visualization and the true label
         visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
