@@ -53,7 +53,7 @@ def get_grad_cam_visualization(test_dataset: torch.utils.data.Dataset,
         the true label of that sample (since it is an output of a DataLoader
         of batch size 1, it's a tensor of shape (1,)).
     """
-    """INSERT YOUR CODE HERE, overrun return."""
+    # Sample a single image from the dataset
     loader = DataLoader(dataset=test_dataset, batch_size=1, shuffle=True)
     input_tensor, true_label = next(iter(loader))
 
@@ -71,13 +71,19 @@ def get_grad_cam_visualization(test_dataset: torch.utils.data.Dataset,
         grayscale_cam = cam(input_tensor=input_tensor, targets=targets)
         grayscale_cam = grayscale_cam[0, :]
 
-        # Prepare image for visualization (H, W, C)
-        rgb_img = input_tensor[0].permute(1, 2, 0).cpu().numpy()
+        # IMPORTANT: Denormalize the image first
+        # The dataset uses these normalization values (from utils.py)
+        mean = torch.tensor([0.4914, 0.4822, 0.4465]).view(3, 1, 1).to(input_tensor.device)
+        std = torch.tensor([0.2023, 0.1994, 0.2010]).view(3, 1, 1).to(input_tensor.device)
         
-        # Normalize to [0, 1] for show_cam_on_image if necessary (handling normalized tensors)
-        rgb_img = (rgb_img - rgb_img.min()) / (rgb_img.max() - rgb_img.min())
+        # Denormalize: x_original = x_normalized * std + mean
+        denormalized_img = input_tensor[0] * std + mean
         
-        # Return the visualization and the true label
+        # Clip to [0, 1] range and convert to numpy (H, W, C)
+        denormalized_img = torch.clamp(denormalized_img, 0, 1)
+        rgb_img = denormalized_img.permute(1, 2, 0).cpu().numpy()
+        
+        # Generate the visualization
         visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
         
         return visualization, true_label
