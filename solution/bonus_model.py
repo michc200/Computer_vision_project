@@ -46,11 +46,9 @@ class BonusModel(nn.Module):
             nn.ReLU6(inplace=True),
         )
 
-        # Series of efficient Inverted Residual blocks
         self.block1 = InvertedResidual(16, 24, 2, 6)   # 128x128 -> 64x64
         self.block2 = InvertedResidual(24, 32, 2, 6)   # 64x64 -> 32x32
 
-        # IMPORTANT: Named as conv3 for grad-cam compatibility
         self.conv3 = nn.Sequential(
             InvertedResidual(32, 64, 2, 6),   # 32x32 -> 16x16
             InvertedResidual(64, 96, 1, 6),   # 16x16 -> 16x16
@@ -58,7 +56,6 @@ class BonusModel(nn.Module):
 
         self.block5 = InvertedResidual(96, 160, 2, 6)  # 16x16 -> 8x8
 
-        # Final conv
         self.final_conv = nn.Sequential(
             nn.Conv2d(160, 320, 1, 1, 0, bias=False),
             nn.BatchNorm2d(320),
@@ -76,7 +73,7 @@ class BonusModel(nn.Module):
         x = self.stem(x)
         x = self.block1(x)
         x = self.block2(x)
-        x = self.conv3(x)  # Target for Grad-CAM
+        x = self.conv3(x) 
         x = self.block5(x)
         x = self.final_conv(x)
         x = self.global_pool(x)
@@ -87,6 +84,5 @@ class BonusModel(nn.Module):
 def my_bonus_model():
     """Override the model initialization here."""
     model = BonusModel()
-    # Ensure this path matches the one in bonus_main.py
     model.load_state_dict(torch.load('checkpoints/bonus.pt')['model'])
     return model

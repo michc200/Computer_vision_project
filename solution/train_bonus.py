@@ -27,7 +27,6 @@ def main():
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=2, verbose=True)
 
     optimizer_params = optimizer.param_groups[0].copy()
-    # remove the parameter values from the optimizer parameters for a cleaner log
     del optimizer_params['params']
 
     # Training Logging Parameters
@@ -82,7 +81,6 @@ def main():
 
         if val_acc > best_val_acc:
             print(f'*** New best validation accuracy: {val_acc:.2f}% ***')
-            # Save to the path required by the PDF
             state = {
                 'model': model.state_dict(),
                 'val_acc': val_acc,
@@ -94,7 +92,6 @@ def main():
 
     print(f"\nTraining completed! Model saved to: checkpoints/bonus.pt")
 
-    # Write output to JSON
     Trainer.write_output(logging_parameters, output_data)
 
 if __name__ == '__main__':
